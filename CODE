@@ -1,0 +1,204 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+import datetime
+
+data = pd.read_csv(r"C:\Users\RAMA RAO\Downloads\TCS_stock_history.csv")
+data['Date'] = pd.to_datetime(data['Date'])
+data.sort_values(by='Date', inplace=True)
+data.head()
+
+print(data.isnull().sum())
+data['Open'] = pd.to_numeric(data['Open'], errors='coerce')
+data['High'] = pd.to_numeric(data['High'], errors='coerce')
+data['Low'] = pd.to_numeric(data['Low'], errors='coerce')
+data['Close'] = pd.to_numeric(data['Close'], errors='coerce')
+data.fillna(method='ffill', inplace=True)
+plt.figure(figsize=(14, 7))
+plt.plot(data['Date'], data['Close'], color='blue',
+label='Close Price')
+plt.xlabel('Date')
+plt.ylabel('Stock Price')
+plt.title('TCS Stock Close Price Over Time')
+plt.legend()
+plt.show()
+
+data['MA50'] = data['Close'].rolling(window=50).mean()
+data['MA200'] = data['Close'].rolling(window=200).mean()
+
+plt.figure(figsize=(14, 7))
+plt.plot(data['Date'], data['Close'], label='Close Price')
+plt.plot(data['Date'], data['MA50'], label='50-Day MA')
+plt.plot(data['Date'], data['MA200'], label='200-Day MA')
+plt.xlabel('Date')
+plt.ylabel('Price')
+plt.title('TCS Stock Price with Moving Averages')
+plt.legend()
+plt.show()
+data['Year'] = data['Date'].dt.year
+data['Month'] = data['Date'].dt.month
+data['Day'] = data['Date'].dt.day
+data['Day_of_Week'] = data['Date'].dt.dayofweek
+
+data['Prev_Close'] = data['Close'].shift(1)
+data.dropna(inplace=True)  # Drop rows with NaN values fro
+X = data[['Open', 'High', 'Low', 'Volume', 'Prev_Close',
+          'Day_of_Week', 'Month']]
+y = data['Close']
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+model = LinearRegression()
+model.fit(X_train, y_train)
+
+y_pred = model.predict(X_test)
+
+print("Mean Squared Error:", mean_squared_error(y_test, y_pred))
+print("R-Squared Score:", r2_score(y_test, y_pred))
+plt.figure(figsize=(10, 5))
+plt.scatter(y_test, y_pred, color='blue', label='Predicted vs Actual')
+plt.xlabel('Actual Close Price')
+plt.ylabel('Predicted Close Price')
+plt.title('Actual vs Predicted Close Price')
+plt.legend()
+plt.show()
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import warnings
+warnings.filterwarnings("ignore")
+
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import LSTM, Dense
+from tqdm import tqdm
+import os
+for dirname, _, filenames in os.walk('/kaggle/input'):
+  for filename in filenames:
+      print(os.path.join(dirname, filename))
+
+df = pd.read_csv(r"C:\Users\RAMA RAO\Downloads\TCS_stock_history.csv")
+df.head()
+df.columns
+df.info()
+df['Date'] = pd.to_datetime(df['Date'])
+df = df.sort_values(by='Date')
+df.describe()
+corel=df.corr()
+corel
+correlation_with_close =df.corr()['Close'].sort_values(ascending=False)
+print(correlation_with_close)
+sns.heatmap(corel, annot=True, cmap="Greens", fmt=".2f")
+plt.show()
+plt.figure(figsize=(12, 6))
+plt.plot(df['Date'], df['Close'], label='Close Price',
+color='b')
+plt.xlabel('Date')
+plt.ylabel('Close Price')
+plt.title('TCS Stock Price over Time',weight = "bold")
+plt.legend()
+plt.show()
+plt.figure(figsize=(12, 6))
+plt.plot(df['Date'], df['Volume'], label='Volume', color='g')
+plt.plot(df['Date'], df['Dividends'], label='Dividends',
+color='r')
+plt.plot(df['Date'], df['Stock Splits'], label='Stock Splits',
+color='m')
+plt.xlabel('Date')
+plt.ylabel('Value')
+plt.title('Volume, Dividends, and Stock Splits overTime',weight = "bold")
+plt.legend()
+plt.show()
+plt.scatter(df['Close'], df['Volume'])
+plt.xlabel('Close Price')
+plt.ylabel('Volume')
+plt.title('Close Price vs. Volume', weight="bold")
+plt.show()
+plt.scatter(df['Dividends'], df['Close'])
+plt.xlabel('Dividends')
+plt.ylabel('Close Price')
+plt.title('Dividends vs. Close Price')
+plt.show()
+df['30-Day Moving Avg'] = df['Close'].rolling(window=30).mean()
+
+plt.figure(figsize=(12, 6))
+plt.plot(df['Date'], df['Close'], label='Close Price',color='b')
+plt.plot(df['Date'], df['30-Day Moving Avg'], label='30-Day Moving Avg', color='r')
+plt.xlabel('Date')
+plt.ylabel('Price')
+plt.title('Close Price and 30-Day Moving Average')
+plt.legend()
+plt.show()
+df['Short_MA'] = df['Close'].rolling(window=5).mean()
+df['Long_MA'] = df['Close'].rolling(window=30).mean()
+
+df['Signal'] = np.where(df['Short_MA'] > df['Long_MA'], 1,-1)
+# Plot the strategy signals
+plt.figure(figsize=(12, 6))
+plt.plot(df['Date'], df['Close'], label='Close Price',color='b')
+plt.plot(df['Date'], df['Short_MA'], label='Short-term MA', color='r')
+plt.plot(df['Date'], df['Long_MA'], label='Long-term MA',color='g')
+plt.scatter(df['Date'], df['Close'] * df['Signal'],
+label='Buy/Sell Signal', marker='o', color='m')
+plt.xlabel('Date')
+plt.ylabel('Price')
+plt.title('Moving Average Crossover Strategy')
+plt.legend()
+plt.show()
+df['Daily_Price_Change'] = df['Close'].pct_change() * 100
+
+plt.figure(figsize=(8, 6))
+sns.histplot(df['Daily_Price_Change'].dropna(), kde=True,color='orange')
+plt.xlabel('Daily Percentage Change')
+plt.ylabel('Frequency')
+plt.title('Distribution of Daily Percentage Change')
+plt.show()
+df['Moving_Avg_Close'] = df['Close'].rolling(window=7).mean()
+df.shape
+X_train = df['Close'].values.reshape(-1, 1)
+y_train = df['Close'].shift(-1).dropna().values
+
+from sklearn.preprocessing import MinMaxScaler
+scaler = MinMaxScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+
+test_ratio = 0.2
+test_size = int(len(df) * test_ratio)
+test_data = df[-test_size:]
+
+X_test = test_data['Close'].values.reshape(-1, 1)
+X_test_scaled = scaler.transform(X_test)
+X_test_lstm = X_test_scaled.reshape(-1, 1, 1)
+ 
+X_train_lstm = X_train_scaled[:-1].reshape(-1, 1, 1)
+y_train_lstm = X_train_scaled[1:]
+model = Sequential()
+model.add(LSTM(50, input_shape=(1, 1)))
+model.add(Dense(1))
+model.compile(optimizer='adam', loss='mean_squared_error')
+epochs = 30
+batch_size = 15
+for epoch in tqdm(range(epochs)):
+ for i in range(0, len(X_train_lstm), batch_size):
+  X_batch = X_train_lstm[i:i+batch_size]
+y_batch = y_train_lstm[i:i+batch_size]
+model.train_on_batch(X_batch, y_batch)
+X_test = test_data['Close'].values.reshape(-1, 1)
+X_test_scaled = scaler.transform(X_test)
+X_test_lstm = X_test_scaled.reshape(-1, 1, 1)
+lstm_predictions = model.predict(X_test_lstm).flatten()
+lstm_predictions = lstm_predictions.reshape(-1, 1)
+lstm_predictions = scaler.inverse_transform(lstm_predictions)
+plt.figure(figsize=(12, 6))
+plt.plot(test_data['Date'], test_data['Close'], label='Actual Close Price', color='b')
+plt.plot(test_data['Date'], lstm_predictions, label='Predicted Close Price(LSTM)', color='r')
+plt.xlabel('Date')
+plt.ylabel('Close Price')
+plt.title('Actual vs. Predicted Close Price using LSTM')
+plt.legend()
+plt.show()
+
